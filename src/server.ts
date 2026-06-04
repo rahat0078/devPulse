@@ -1,11 +1,12 @@
-import express, { type Application } from 'express'
-const app: Application = express()
-const port = 5000
+import app from "./app";
+import config from "./config";
+import { initDB } from "./db";
 
-app.get('/', (req, res) => {
-  res.send('Hello devPulse!')
-})
+const main = () => {
+  initDB();
+  app.listen(config.port, () => {
+    console.log(`devPulse app running on port ${config.port}`);
+  });
+};
 
-app.listen(port, () => {
-  console.log(`devPulse app listening on port ${port}`)
-})
+main()
