@@ -1,9 +1,11 @@
+import type { JwtPayload } from "jsonwebtoken";
 import { pool } from "../../db";
 
 interface I_Issue {
   title: string;
   description: string;
   type: string;
+  status?: string
 }
 const createIssuesIntoDB = async (payload: I_Issue, userId: string) => {
   const { title, description, type } = payload;
@@ -131,6 +133,60 @@ const getSingleIssueFromDb = async (id: string) => {
   };
 };
 
+const updateIssueIntoDb = async (
+  issueId: string,
+  payload: I_Issue,
+  user: JwtPayload,
+) => {
+  const issueResult = await pool.query(
+    `
+    SELECT * FROM issues
+    WHERE id = $1
+    `,
+    [issueId],
+  );
+  if (issueResult.rows.length === 0) {
+    throw new Error("Issue not found");
+  }
+  const issue = issueResult.rows[0];
+  if (user.role === "contributor") {
+    if (issue.reporter_id !== user.id) {
+      throw new Error("You can update only your own issues");
+    }
+
+    if (issue.status !== "open") {
+      throw new Error("Open issues only can be updated");
+    }
+  }
+  const title = (payload.title as string) ?? issue.title;
+
+  const description = (payload.description as string) ?? issue.description;
+
+  const type = (payload.type as string) ?? issue.type;
+  let status = issue.status;
+
+  if (user.role === "maintainer" && payload.status) {
+    status = payload.status as string;
+  }
+
+  const updatedResult = await pool.query(
+    `
+    UPDATE issues
+    SET
+      title = $1,
+      description = $2,
+      type = $3,
+      status = $4,
+      updated_at = CURRENT_TIMESTAMP
+    WHERE id = $5
+    RETURNING *
+    `,
+    [title, description, type, status, issueId],
+  );
+
+  return updatedResult.rows[0];
+};
+
 const deleteIssueFromDb = async (id: string) => {
   const issue = await pool.query(
     `
@@ -142,15 +198,19 @@ const deleteIssueFromDb = async (id: string) => {
   if (issue.rows.length === 0) {
     throw new Error("Issue not found");
   }
-  const result = await pool.query(`
+  const result = await pool.query(
+    `
     DELETE FROM issues WHERE id=$1
-    `, [id]);
-  return result
+    `,
+    [id],
+  );
+  return result;
 };
 
 export const issuesService = {
   createIssuesIntoDB,
   getAllIssuesFromDB,
   getSingleIssueFromDb,
+  updateIssueIntoDb,
   deleteIssueFromDb,
 };

@@ -58,6 +58,20 @@ const getSingleIssues = async (
   }
 };
 
+const updateIssue = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+    const result = await issuesService.updateIssueIntoDb(id as string, req.body, req.user!);
+
+    res.status(200).json({
+      success: true,
+      message: "Issue updated successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 const deleteIssue = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
@@ -76,5 +90,6 @@ export const issuesController = {
   createIssue,
   getAllIssues,
   getSingleIssues,
+  updateIssue,
   deleteIssue,
 };
