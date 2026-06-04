@@ -4,6 +4,7 @@ import express, { type Application } from "express";
 import cookieParser from "cookie-parser";
 import { authRouter } from "./modules/auth/auth.routes";
 import { issuesRouter } from "./modules/issues/issues.routes";
+import errorHandler from "./middleware/errorHandler";
 
 dotenv.config();
 const app: Application = express();
@@ -20,9 +21,7 @@ app.use(
 app.use("/api/auth", authRouter)
 app.use("/api/issues", issuesRouter)
 
+app.use(errorHandler)
 
-app.get("/", (req, res) => {
-  res.send("devPulse!");
-});
 
 export default app;
