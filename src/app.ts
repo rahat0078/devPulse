@@ -1,6 +1,6 @@
 import cors from "cors";
 import dotenv from "dotenv";
-import express, { type Application } from "express";
+import express, { type Application, type Request, type Response } from "express";
 import cookieParser from "cookie-parser";
 import { authRouter } from "./modules/auth/auth.routes";
 import { issuesRouter } from "./modules/issues/issues.routes";
@@ -20,6 +20,12 @@ app.use(
 
 app.use("/api/auth", authRouter)
 app.use("/api/issues", issuesRouter)
+app.get("/", (req: Request, res: Response) => {
+  res.json({
+    success: true,
+    message: "Hello devpulse"
+  })
+})
 
 app.use(errorHandler)
 
